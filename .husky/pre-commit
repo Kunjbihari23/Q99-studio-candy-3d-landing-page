@@ -1,0 +1,170 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+###############################################
+# 1️⃣ Block Sensitive Files
+###############################################
+# blocked_files=$(git diff --cached --name-only | grep -E "\.env$|\.env\..*|\.pem$|\.key$|\.p12$|\.crt$" || true)
+# if [ -n "$blocked_files" ]; then
+#   echo "❌ Sensitive files detected:"
+#   echo "$blocked_files"
+#   exit 1
+# fi
+
+###############################################
+# 2️⃣ Detect Merge Conflicts
+###############################################
+conflict_files=$(git diff --cached --name-only | while read -r file; do
+  if [ -f "$file" ]; then
+    if grep -qE "^<<<<<<< |^======= |^>>>>>>> " "$file" 2>/dev/null; then
+      echo "$file"
+    fi
+  fi
+done)
+if [ -n "$conflict_files" ]; then
+  echo "❌ Merge conflicts detected in staged files:"
+  printf "$conflict_files\n"
+  exit 1
+fi
+
+###############################################
+# 3️⃣ Check for TODO/FIXME Comments
+###############################################
+todo_files=""
+for file in $(git diff --cached --name-only | grep -E "\.(js|jsx|ts|tsx)$" || true); do
+  if [ -f "$file" ]; then
+    # Check for TODO, FIXME, XXX, HACK comments (case insensitive)
+    if grep -qiE "(TODO|FIXME|XXX|HACK)" "$file" 2>/dev/null; then
+      todo_files="${todo_files}${file}\n"
+    fi
+  fi
+done
+if [ -n "$todo_files" ]; then
+  echo "⚠️  TODO/FIXME comments found in staged files:"
+  printf "$todo_files"
+  echo "💡 Tip: Consider resolving TODO/FIXME comments before committing"
+  # In non-interactive mode (CI), allow but warn
+  if [ -t 0 ]; then
+    read -p "Continue anyway? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      exit 1
+    fi
+  else
+    echo "⚠️  Non-interactive mode: Allowing commit with TODO/FIXME comments"
+  fi
+fi
+
+###############################################
+# 5️⃣ Check for Hardcoded Secrets
+###############################################
+
+secret_files=""
+
+# List of files to ignore
+ignore_files="src/config/api/api.ts"
+
+for file in $(git diff --cached --name-only | grep -E "\.(js|jsx|ts|tsx|json|env)$" || true); do
+  if [ -f "$file" ]; then
+
+    # Skip ignored files
+    skip_file=0
+    for ignore in $ignore_files; do
+      case "$file" in
+        "$ignore") skip_file=1 ;;
+      esac
+    done
+    if [ $skip_file -eq 1 ]; then
+      continue
+    fi
+
+    # Check for hardcoded secrets
+    if grep -qiE "(password\s*[=:]\s*['\"][^'\"]{8,}|token\s*[=:]\s*['\"][^'\"]{20,}|secret[_-]?key\s*[=:]\s*['\"]|private[_-]?key\s*[=:]\s*['\"])" "$file" 2>/dev/null; then
+      secret_files="${secret_files}${file}\n"
+    fi
+  fi
+done
+
+if [ -n "$secret_files" ]; then
+  echo "❌ Potential hardcoded secrets detected in staged files:"
+  printf "$secret_files"
+  echo "💡 Tip: Use environment variables or config files for secrets"
+  exit 1
+fi
+
+
+###############################################
+# 6️⃣ File Naming Rules (camelCase or kebab-case)
+###############################################
+invalid_files=""
+
+# 1. Ignore specific filenames
+IGNORE_FILES="next.config.js next.config.mjs next.config.ts postcss.config.js tailwind.config.js jest.config.js vitest.config.ts tsconfig.json middleware.ts"
+
+# 2. Ignore entire folders (paths containing these strings will be skipped)
+# Example: "services/" will ignore "src/services/auth.hook.ts"
+IGNORE_DIRS="services/ generated/ legacy/ ui/components/ui/ src/types/"
+
+should_skip_file() {
+  file="$1"
+  
+  # Check against IGNORE_FILES
+  for ignore in $IGNORE_FILES; do
+    case "$file" in
+      *"$ignore") return 0 ;; 
+    esac
+  done
+
+  # Check against IGNORE_DIRS
+  for dir in $IGNORE_DIRS; do
+    case "$file" in
+      *"$dir"*) return 0 ;; # Returns true if the file path contains the dir name
+    esac
+  done
+
+  return 1
+}
+
+# Loop through staged JS/TS files
+for file in $(git diff --cached --name-only | grep -E "\.(js|jsx|ts|tsx)$" || true); do
+  
+  # Skip ignored files and directories
+  if should_skip_file "$file"; then
+    continue
+  fi
+
+  basename=$(basename "$file" | sed 's/\.[jt]sx\?$//')
+
+  # Check for invalid patterns (Underscore, Space, Start with Number)
+  # NOTE: If you want to allow dots in filenames (like auth.hook.ts), ensure grep doesn't flag them here.
+  echo "$basename" | grep -qE "_| |^[0-9]" && invalid_files="${invalid_files}${file}\n" && continue
+
+  # Block long lowercase words (>10 chars) with no hyphen, capital letter, OR DOT.
+  # Added `|\.` to the regex so 'authentication.hook' (long, lowercase, with dot) is considered valid.
+  if [ ${#basename} -gt 10 ]; then
+    echo "$basename" | grep -qE "[A-Z]|-|\." || invalid_files="${invalid_files}${file}\n"
+  fi
+done
+
+if [ -n "$invalid_files" ]; then
+  echo "❌ Invalid file names (use camelCase, kebab-case, or dot.notation):"
+  printf "$invalid_files"
+  exit 1
+fi
+
+###############################################
+# 7️⃣ Run lint-staged (ESLint & Prettier on staged files only)
+###############################################
+echo "🔧 Running lint-staged (ESLint & Prettier on staged files)..."
+# Check if there are any JS/TS files staged before running lint-staged
+js_files=$(git diff --cached --name-only | grep -E "\.(js|jsx|ts|tsx)$" || true)
+if [ -n "$js_files" ]; then
+  npx lint-staged || {
+    echo "❌ lint-staged failed"
+    exit 1
+  }
+else
+  echo "ℹ️  No JS/TS files to lint, skipping lint-staged"
+fi

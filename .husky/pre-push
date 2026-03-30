@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Protected branches - direct push not allowed
+protected_branches="main development"
+
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+for branch in $protected_branches; do
+  if [ "$current_branch" = "$branch" ]; then
+    echo "❌ Direct push to '$current_branch' is NOT allowed."
+    echo "➡ Create a Pull Request instead."
+    exit 1
+  fi
+done
+
+# Run linting before push
+echo "🔍 Running linter..."
+npm run lint || exit 1
+
+# Check if build succeeds
+echo "🏗️  Checking build..."
+npm run build || exit 1
+
+echo "✅ Pre-push checks passed!"
