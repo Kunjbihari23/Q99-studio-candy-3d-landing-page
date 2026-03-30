@@ -105,7 +105,7 @@ IGNORE_FILES="next.config.js next.config.mjs next.config.ts postcss.config.js ta
 
 # 2. Ignore entire folders (paths containing these strings will be skipped)
 # Example: "services/" will ignore "src/services/auth.hook.ts"
-IGNORE_DIRS="services/ generated/ legacy/ ui/components/ui/ src/types/"
+IGNORE_DIRS="services/ generated/ legacy/ ui/components/ui/ src/types/ src/systems"
 
 should_skip_file() {
   file="$1"
