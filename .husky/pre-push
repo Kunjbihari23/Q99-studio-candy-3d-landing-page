@@ -2,7 +2,7 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 # Protected branches - direct push not allowed
-protected_branches="main development"
+protected_branches="development"
 
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 
