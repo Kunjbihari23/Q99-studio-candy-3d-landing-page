@@ -4,13 +4,6 @@ import * as THREE from "three";
 import { useGLTF, Clone } from "@react-three/drei";
 import { useMicroMotion } from "../../systems/useMicroMotion";
 
-useGLTF.preload("/Glb-Models/candy_pink.glb");
-useGLTF.preload("/Glb-Models/candy_model_green.glb");
-useGLTF.preload("/Glb-Models/Color_Full_Candy.glb");
-useGLTF.preload("/Glb-Models/Mix_candy.glb");
-useGLTF.preload("/Glb-Models/candy_stick.glb");
-useGLTF.preload("/Glb-Models/red_candy_monster.glb");
-
 export type CandyType = "berry" | "mint" | "lemon" | "grape" | "soda" | "peach";
 
 export interface CandyTileData {
@@ -133,8 +126,6 @@ const CandyTile = memo(
       group.scale.x = THREE.MathUtils.damp(group.scale.x, nextScale, 14, delta);
       group.scale.y = THREE.MathUtils.damp(group.scale.y, nextScale, 14, delta);
       group.scale.z = THREE.MathUtils.damp(group.scale.z, nextScale, 14, delta);
-
-      shell.rotation.y += delta * 0.45;
     });
 
     const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
@@ -155,7 +146,7 @@ const CandyTile = memo(
           onPointerOut={microMotion.handlePointerOut}
           onPointerDown={handlePointerDown}
         >
-          <Clone object={scene} scale={0.9} />
+          <Clone object={scene} scale={0.9} rotation={[0, Math.PI / 0.29, 0]} />
         </group>
       </group>
     );

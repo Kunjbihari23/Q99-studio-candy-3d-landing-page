@@ -5,11 +5,7 @@ import { useGLTF } from "@react-three/drei";
 import ParticleBurst from "../../../systems/ParticleBurst";
 import { useSound } from "../../../systems/useSound";
 
-useGLTF.preload("/Glb-Models/candy_pink.glb");
-useGLTF.preload("/Glb-Models/candy_model_green.glb");
-useGLTF.preload("/Glb-Models/Mix_candy.glb");
-
-const RAIN_COUNT = 60;
+const RAIN_COUNT = 20;
 const CANDY_TYPES = [
   "/Glb-Models/candy_pink.glb",
   "/Glb-Models/candy_model_green.glb",
@@ -56,7 +52,7 @@ const createRainState = (count: number): RainState => {
     positions[stride + 2] = THREE.MathUtils.randFloatSpread(FALL_AREA.depth);
 
     velocities[stride] = THREE.MathUtils.randFloatSpread(0.18);
-    velocities[stride + 1] = THREE.MathUtils.randFloat(1.5, 3.4);
+    velocities[stride + 1] = THREE.MathUtils.randFloat(0.3, 1);
     velocities[stride + 2] = THREE.MathUtils.randFloatSpread(0.16);
 
     rotations[stride] = Math.random() * Math.PI * 2;
@@ -83,7 +79,7 @@ const respawnInstance = (state: RainState, index: number) => {
     FALL_AREA.depth,
   );
   state.velocities[stride] = THREE.MathUtils.randFloatSpread(0.18);
-  state.velocities[stride + 1] = THREE.MathUtils.randFloat(1.5, 3.4);
+  state.velocities[stride + 1] = THREE.MathUtils.randFloat(0.6, 1.2);
   state.velocities[stride + 2] = THREE.MathUtils.randFloatSpread(0.16);
   state.rotations[stride] = Math.random() * Math.PI * 2;
   state.rotations[stride + 1] = Math.random() * Math.PI * 2;

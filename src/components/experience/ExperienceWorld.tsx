@@ -1,25 +1,23 @@
-/* eslint-disable react-hooks/purity */
+import { useGLTF } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
-  type ComponentType,
   Suspense,
   lazy,
   memo,
   useEffect,
-  useMemo,
   useRef,
   useState,
+  type ComponentType,
   type LazyExoticComponent,
 } from "react";
 import * as THREE from "three";
-import { useGLTF } from "@react-three/drei";
-import HeroSection from "../hero/Hero";
-import SodaScene from "../soda/SodaScene";
 import { InteractionSystem } from "../../systems/interaction";
 import {
   useScrollCamera,
   type CameraPose,
 } from "../../systems/useScrollCamera";
+import HeroSection from "../hero/Hero";
+import SodaScene from "../soda/SodaScene";
 
 const LazyCandyLabWorld = lazy(() => import("./world/CandyLabWorld"));
 const LazyMatch3World = lazy(() => import("./world/Match3World"));
@@ -117,103 +115,12 @@ const HeroWorld = () => {
   );
 };
 
-const CandyDustSystem = () => {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
-  const dummy = useMemo(() => new THREE.Object3D(), []);
-
-  // Use a real candy model instead of primitive
-  const { scene } = useGLTF("/Glb-Models/candy_pink.glb");
-
-  const { geometry, material } = useMemo(() => {
-    let geo: THREE.BufferGeometry | null = null;
-    let mat: THREE.Material | THREE.Material[] | null = null;
-    scene.traverse((child) => {
-      const mesh = child as THREE.Mesh;
-      if (mesh.isMesh) {
-        if (!geo) geo = mesh.geometry.clone();
-        if (!mat) mat = mesh.material;
-      }
-    });
-    return { geometry: geo, material: mat };
-  }, [scene]);
-
-  const items = useMemo(
-    () =>
-      Array.from({ length: 80 }, () => ({
-        position: new THREE.Vector3(
-          THREE.MathUtils.randFloatSpread(9),
-          THREE.MathUtils.randFloat(-42, 2),
-          THREE.MathUtils.randFloat(-3.2, 3.2),
-        ),
-        rotation: new THREE.Euler(
-          Math.random() * Math.PI * 2,
-          Math.random() * Math.PI * 2,
-          Math.random() * Math.PI * 2,
-        ),
-        speed: THREE.MathUtils.randFloat(0.3, 0.7),
-        scale: THREE.MathUtils.randFloat(0.08, 0.18),
-      })),
-    [],
-  );
-
-  useFrame(({ clock }) => {
-    const mesh = meshRef.current;
-    if (!mesh) {
-      return;
-    }
-
-    const time = clock.getElapsedTime();
-    for (let index = 0; index < items.length; index += 1) {
-      const item = items[index];
-      dummy.position.set(
-        item.position.x,
-        item.position.y + Math.sin(time * item.speed + index) * 0.16,
-        item.position.z,
-      );
-      dummy.rotation.set(
-        item.rotation.x + time * item.speed * 0.6,
-        item.rotation.y + time * item.speed,
-        item.rotation.z,
-      );
-      dummy.scale.setScalar(item.scale);
-      dummy.updateMatrix();
-      mesh.setMatrixAt(index, dummy.matrix);
-    }
-    mesh.instanceMatrix.needsUpdate = true;
-  });
-
-  // We add fallback geometry just in case traversing GLTF fails
-  if (!geometry && !material) {
-    return (
-      <instancedMesh
-        ref={meshRef}
-        args={[undefined, undefined, items.length]}
-        frustumCulled={false}
-      >
-        <icosahedronGeometry args={[1, 0]} />
-        <meshBasicMaterial color="#ffe8b0" transparent opacity={0.5} />
-      </instancedMesh>
-    );
-  }
-
-  return (
-    <instancedMesh
-      ref={meshRef}
-      args={[geometry ?? undefined, material ?? undefined, items.length]}
-      frustumCulled={false}
-    />
-  );
-};
-
 useGLTF.preload("/Glb-Models/candy_pink.glb");
-
-const AmbientCandyDust = () => {
-  return (
-    <Suspense fallback={null}>
-      <CandyDustSystem />
-    </Suspense>
-  );
-};
+useGLTF.preload("/Glb-Models/candy_model_green.glb");
+useGLTF.preload("/Glb-Models/Mix_candy.glb");
+useGLTF.preload("/Glb-Models/red_candy_monster.glb");
+useGLTF.preload("/Glb-Models/Color_Full_Candy.glb");
+useGLTF.preload("/Glb-Models/candy_stick.glb");
 
 const CameraRig = ({
   targetRef,
@@ -320,7 +227,7 @@ const ExperienceCanvas = ({
       <fog attach="fog" args={["#12061f", 10, 30]} />
       <InteractionSystem>
         <CameraRig targetRef={targetRef} />
-        <AmbientCandyDust />
+        {/* <AmbientCandyDust />? */}
 
         <group position={[0, SCENE_DEPTH[0], 0]}>
           <HeroWorld />

@@ -1,3 +1,4 @@
+import { useThree, type ThreeEvent } from "@react-three/fiber";
 import {
   useCallback,
   useEffect,
@@ -6,13 +7,11 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { type ThreeEvent, useThree } from "@react-three/fiber";
+import { useSound } from "../../../systems/useSound";
 import CandyTile, {
   type CandyTileData,
   type CandyType,
 } from "../../candy/CandyTile";
-import ParticleBurst from "../../../systems/ParticleBurst";
-import { useSound } from "../../../systems/useSound";
 
 const GRID_SIZE = 6;
 const TILE_GAP = 1.08;
@@ -36,12 +35,6 @@ type Board = BoardCell[][];
 interface GridPosition {
   row: number;
   col: number;
-}
-
-interface BurstEvent {
-  id: number;
-  position: [number, number, number];
-  color: string;
 }
 
 interface DragState {
@@ -337,7 +330,6 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
 
   const [board, setBoard] = useState<Board>(() => createInitialBoard());
   const [selectedCell, setSelectedCell] = useState<GridPosition | null>(null);
-  const [bursts, setBursts] = useState<BurstEvent[]>([]);
   const [busy, setBusy] = useState(false);
 
   const boardRef = useRef(board);
@@ -371,14 +363,6 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
     if (nextBursts.length === 0) {
       return;
     }
-
-    setBursts((current) => [...current, ...nextBursts]);
-    window.setTimeout(() => {
-      const idsToRemove = new Set(nextBursts.map((burst) => burst.id));
-      setBursts((current) =>
-        current.filter((burst) => !idsToRemove.has(burst.id)),
-      );
-    }, 1000);
   }, []);
 
   const resolveBoard = useCallback(
@@ -543,18 +527,6 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
     >
       <ambientLight intensity={0.72} />
       <directionalLight position={[4, 7, 5]} intensity={1.25} color="#fff4f8" />
-      <pointLight
-        position={[-4, 2, 4]}
-        intensity={11}
-        distance={14}
-        color="#76e0ff"
-      />
-      <pointLight
-        position={[4, -2, 4]}
-        intensity={9}
-        distance={14}
-        color="#ff74c6"
-      />
 
       <Match3Board
         board={board}
@@ -563,15 +535,6 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
         activeIndex={activeIndex}
         onTilePointerDown={handleTilePointerDown}
       />
-
-      {bursts.map((burst) => (
-        <ParticleBurst
-          key={burst.id}
-          position={burst.position}
-          color={burst.color}
-          count={26}
-        />
-      ))}
     </group>
   );
 };
