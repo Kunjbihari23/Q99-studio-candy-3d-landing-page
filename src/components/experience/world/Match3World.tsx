@@ -16,6 +16,7 @@ import CandyTile, {
 const GRID_SIZE = 6;
 const TILE_GAP = 1.08;
 const SWAP_DRAG_THRESHOLD = 28;
+const SWAP_ANIMATION_MS = 180;
 const CASCADE_DELAY_MS = 220;
 const REFILL_DELAY_MS = 240;
 
@@ -47,16 +48,6 @@ interface DragState {
 }
 
 let tileSequence = 0;
-let burstSequence = 0;
-
-const MATCH_COLORS: Record<CandyType, string> = {
-  berry: "#ff8ac5",
-  mint: "#b7fff3",
-  lemon: "#fff0a2",
-  grape: "#dac4ff",
-  soda: "#b7e7ff",
-  peach: "#ffd6a7",
-};
 
 const nextTileId = () => {
   tileSequence += 1;
@@ -321,12 +312,15 @@ const Match3Board = ({
 
 const Match3World = ({ activeIndex }: { activeIndex: number }) => {
   const { viewport } = useThree();
-  console.log(viewport.width);
-  const isMobile = viewport.width <= 12;
-  const smallPC = viewport.width <= 16;
-  const sceneX = isMobile ? 1.5 : smallPC ? -1.8 : -0.5;
-  const sceneY = smallPC ? -4 : 0;
-  const sceneScale = isMobile ? 0.4 : 0.5;
+  const sceneLayout = useMemo(() => {
+    const isMobile = viewport.width <= 12;
+    const smallPC = viewport.width <= 16;
+    return {
+      x: isMobile ? 1.5 : smallPC ? -1.8 : -0.5,
+      y: smallPC ? -4 : 0,
+      scale: isMobile ? 0.4 : 0.5,
+    };
+  }, [viewport.width]);
 
   const [board, setBoard] = useState<Board>(() => createInitialBoard());
   const [selectedCell, setSelectedCell] = useState<GridPosition | null>(null);
@@ -345,26 +339,6 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
     busyRef.current = busy;
   }, [busy]);
 
-  const pushBursts = useCallback((cells: GridPosition[], nextBoard: Board) => {
-    const nextBursts = cells.flatMap((cell) => {
-      const tile = nextBoard[cell.row][cell.col];
-      if (!tile) {
-        return [];
-      }
-
-      burstSequence += 1;
-      return {
-        id: burstSequence,
-        position: getTilePosition(cell.row, cell.col),
-        color: MATCH_COLORS[tile.type],
-      };
-    });
-
-    if (nextBursts.length === 0) {
-      return;
-    }
-  }, []);
-
   const resolveBoard = useCallback(
     async (nextBoard: Board) => {
       let workingBoard = nextBoard;
@@ -380,7 +354,6 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
           break;
         }
 
-        pushBursts(matches.cells, workingBoard);
         playPop();
         if (chain > 1) {
           playBurst();
@@ -400,7 +373,7 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
         chain += 1;
       }
     },
-    [playBurst, playPop, pushBursts],
+    [playBurst, playPop],
   );
 
   const commitSwap = useCallback(
@@ -418,14 +391,14 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
       setBoard(swappedBoard);
       boardRef.current = swappedBoard;
 
-      await wait(180);
+      await wait(SWAP_ANIMATION_MS);
 
       const matches = findMatches(swappedBoard);
       if (matches.cells.length === 0) {
         const revertedBoard = swapCells(swappedBoard, first, second);
         setBoard(revertedBoard);
         boardRef.current = revertedBoard;
-        await wait(180);
+        await wait(SWAP_ANIMATION_MS);
         setBusy(false);
         busyRef.current = false;
         return;
@@ -522,8 +495,8 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
 
   return (
     <group
-      position={[sceneX, sceneY, 0]}
-      scale={[sceneScale, sceneScale, sceneScale]}
+      position={[sceneLayout.x, sceneLayout.y, 0]}
+      scale={[sceneLayout.scale, sceneLayout.scale, sceneLayout.scale]}
     >
       <ambientLight intensity={0.72} />
       <directionalLight position={[4, 7, 5]} intensity={1.25} color="#fff4f8" />

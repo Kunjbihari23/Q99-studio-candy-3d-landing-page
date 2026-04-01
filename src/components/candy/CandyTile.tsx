@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef } from "react";
+import { memo, useRef } from "react";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { useGLTF, Clone } from "@react-three/drei";
@@ -13,6 +13,19 @@ export interface CandyTileData {
   col: number;
   removing: boolean;
 }
+
+const MODEL_PATH_BY_TYPE: Record<CandyType, string> = {
+  berry: "/Glb-Models/candy_pink.glb",
+  mint: "/Glb-Models/candy_model_green.glb",
+  lemon: "/Glb-Models/Color_Full_Candy.glb",
+  grape: "/Glb-Models/Mix_candy.glb",
+  soda: "/Glb-Models/candy_stick.glb",
+  peach: "/Glb-Models/red_candy_monster.glb",
+};
+
+Object.values(MODEL_PATH_BY_TYPE).forEach((path) => {
+  useGLTF.preload(path);
+});
 
 interface CandyTileProps {
   tile: CandyTileData;
@@ -36,7 +49,6 @@ const CandyTile = memo(
     onPointerDown,
   }: CandyTileProps) => {
     const groupRef = useRef<THREE.Group>(null);
-    const shellRef = useRef<THREE.Group>(null);
     const microMotion = useMicroMotion({
       floatAmplitude: 0.05,
       floatSpeed: 1.7,
@@ -45,53 +57,19 @@ const CandyTile = memo(
       baseGlow: 0.08,
       hoverGlow: 0.18,
     });
+    const { scene } = useGLTF(MODEL_PATH_BY_TYPE[tile.type]);
 
-    const { scene: berryScene } = useGLTF("/Glb-Models/candy_pink.glb");
-    const { scene: mintScene } = useGLTF("/Glb-Models/candy_model_green.glb");
-    const { scene: lemonScene } = useGLTF("/Glb-Models/Color_Full_Candy.glb");
-    const { scene: grapeScene } = useGLTF("/Glb-Models/Mix_candy.glb");
-    const { scene: sodaScene } = useGLTF("/Glb-Models/candy_stick.glb");
-    const { scene: peachScene } = useGLTF("/Glb-Models/red_candy_monster.glb");
-
-    const scene = useMemo(() => {
-      switch (tile.type) {
-        case "berry":
-          return berryScene;
-        case "mint":
-          return mintScene;
-        case "lemon":
-          return lemonScene;
-        case "grape":
-          return grapeScene;
-        case "soda":
-          return sodaScene;
-        case "peach":
-          return peachScene;
-        default:
-          return berryScene;
-      }
-    }, [
-      tile.type,
-      berryScene,
-      mintScene,
-      lemonScene,
-      grapeScene,
-      sodaScene,
-      peachScene,
-    ]);
-
-    useFrame((_, delta) => {
+    useFrame(({ clock }, delta) => {
       // Gate the animation loop if the section is not active
       if (!isActive) return;
 
       const group = groupRef.current;
-      const shell = shellRef.current;
 
-      if (!group || !shell) {
+      if (!group) {
         return;
       }
 
-      const motion = microMotion.sample(performance.now() * 0.001, delta);
+      const motion = microMotion.sample(clock.getElapsedTime(), delta);
       const targetY = position[1] + motion.floatOffset;
       const startY = position[1] + 3;
       const initialGroup = !group.userData.initialized;
@@ -141,7 +119,6 @@ const CandyTile = memo(
     return (
       <group ref={groupRef} position={position}>
         <group
-          ref={shellRef}
           onPointerOver={microMotion.handlePointerOver}
           onPointerOut={microMotion.handlePointerOut}
           onPointerDown={handlePointerDown}

@@ -93,7 +93,7 @@ const BubbleSystem = ({
       const baseY = offsets[i * 3 + 1];
       const baseZ = offsets[i * 3 + 2];
       const speed = speeds[i];
-      const scale = scales[i * 2];
+      const scale = scales[i];
       const phase = phases[i];
 
       // Continuous upward motion with looping

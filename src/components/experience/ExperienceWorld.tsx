@@ -11,7 +11,6 @@ import {
   type LazyExoticComponent,
 } from "react";
 import * as THREE from "three";
-import { InteractionSystem } from "../../systems/interaction";
 import {
   useScrollCamera,
   type CameraPose,
@@ -213,58 +212,59 @@ const ExperienceCanvas = ({
     <Canvas
       className="absolute inset-0 pointer-events-auto"
       style={{ pointerEvents: "auto" }}
-      dpr={[0.75, 1]}
+      dpr={isMobile ? [0.6, 0.9] : [0.7, 1]}
       camera={{
         position: CAMERA_POSES[0].position,
         fov: 34,
         near: 0.1,
         far: 120,
       }}
-      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      gl={{
+        antialias: !isMobile,
+        alpha: true,
+        powerPreference: "high-performance",
+      }}
+      performance={{ min: 0.55, max: 1, debounce: 150 }}
       shadows={false}
     >
       <color attach="background" args={["#12061f"]} />
       <fog attach="fog" args={["#12061f", 10, 30]} />
-      <InteractionSystem>
-        <CameraRig targetRef={targetRef} />
-        {/* <AmbientCandyDust />? */}
-
-        <group position={[0, SCENE_DEPTH[0], 0]}>
-          <HeroWorld />
-        </group>
-        <SceneSlot
-          activeSceneIndex={activeSceneIndex}
-          index={1}
-          position={[isMobile ? 0 : SCENE_X[1], SCENE_DEPTH[1], 0]}
-          scale={isMobile ? 0.78 : 0.95}
-          Scene={LazyCandyLabWorld}
-          proxyColor="#ff85c2"
-        />
-        <SceneSlot
-          activeSceneIndex={activeSceneIndex}
-          index={2}
-          position={[isMobile ? 0 : SCENE_X[2], SCENE_DEPTH[2], 0]}
-          scale={isMobile ? 0.72 : 0.9}
-          Scene={LazyMatch3World}
-          proxyColor="#00d8ff"
-        />
-        <SceneSlot
-          activeSceneIndex={activeSceneIndex}
-          index={3}
-          position={[isMobile ? 0 : SCENE_X[3], SCENE_DEPTH[3], 0]}
-          scale={isMobile ? 0.74 : 0.9}
-          Scene={LazyPowerupWorld}
-          proxyColor="#ffe24a"
-        />
-        <SceneSlot
-          activeSceneIndex={activeSceneIndex}
-          index={4}
-          position={[isMobile ? 0 : SCENE_X[4], SCENE_DEPTH[4], 0]}
-          scale={isMobile ? 0.7 : 0.85}
-          Scene={LazyLeaderboardWorld}
-          proxyColor="#a3ffbd"
-        />
-      </InteractionSystem>
+      <CameraRig targetRef={targetRef} />
+      <group position={[0, SCENE_DEPTH[0], 0]}>
+        <HeroWorld />
+      </group>
+      <SceneSlot
+        activeSceneIndex={activeSceneIndex}
+        index={1}
+        position={[isMobile ? 0 : SCENE_X[1], SCENE_DEPTH[1], 0]}
+        scale={isMobile ? 0.78 : 0.95}
+        Scene={LazyCandyLabWorld}
+        proxyColor="#ff85c2"
+      />
+      <SceneSlot
+        activeSceneIndex={activeSceneIndex}
+        index={2}
+        position={[isMobile ? 0 : SCENE_X[2], SCENE_DEPTH[2], 0]}
+        scale={isMobile ? 0.72 : 0.9}
+        Scene={LazyMatch3World}
+        proxyColor="#00d8ff"
+      />
+      <SceneSlot
+        activeSceneIndex={activeSceneIndex}
+        index={3}
+        position={[isMobile ? 0 : SCENE_X[3], SCENE_DEPTH[3], 0]}
+        scale={isMobile ? 0.74 : 0.9}
+        Scene={LazyPowerupWorld}
+        proxyColor="#ffe24a"
+      />
+      <SceneSlot
+        activeSceneIndex={activeSceneIndex}
+        index={4}
+        position={[isMobile ? 0 : SCENE_X[4], SCENE_DEPTH[4], 0]}
+        scale={isMobile ? 0.7 : 0.85}
+        Scene={LazyLeaderboardWorld}
+        proxyColor="#a3ffbd"
+      />
     </Canvas>
   );
 };

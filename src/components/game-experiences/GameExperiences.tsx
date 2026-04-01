@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/refs */
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -7,96 +6,123 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 const EXPERIENCES = [
-  { id: 1, src: "/Images/experience/exp1.png", title: "Vibrant Puzzles" },
-  { id: 2, src: "/Images/experience/exp2.png", title: "Epic Powerups" },
-  { id: 3, src: "/Images/experience/exp3.png", title: "Candy Combos" },
-  { id: 4, src: "/Images/experience/exp4.png", title: "Global Leaderboards" },
+  { id: 1, src: "/Images/experience/exp1.jpeg", title: "Vibrant Puzzles" },
+  { id: 2, src: "/Images/experience/exp2.jpeg", title: "Epic Powerups" },
+  { id: 3, src: "/Images/experience/exp3.jpeg", title: "Candy Combos" },
+  { id: 4, src: "/Images/experience/exp4.jpeg", title: "Global Leaderboards" },
 ];
+
+const MOBILE_BREAKPOINT = 768;
 
 const GameExperiences = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const [activeIndex, setActiveIndex] = useState(1);
+  const activeIndexRef = useRef(activeIndex);
+  const hasEnteredRef = useRef(false);
+  const triggerLayoutRef = useRef<
+    (activeIdx: number, isInitial?: boolean) => void
+  >(() => {});
 
-  // Move triggerLayout declaration BEFORE useGSAP hook to fix TDZ (Temporal Dead Zone) error
-  const { contextSafe } = useGSAP(() => {}, { scope: containerRef });
+  const getXSpacing = useCallback(
+    () => (window.innerWidth < MOBILE_BREAKPOINT ? 140 : 250),
+    [],
+  );
 
-  const triggerLayout = contextSafe((activeIdx: number, isInitial = false) => {
-    cardsRef.current.forEach((card, i) => {
-      if (!card) return;
+  useEffect(() => {
+    activeIndexRef.current = activeIndex;
+    if (hasEnteredRef.current) {
+      triggerLayoutRef.current(activeIndex, false);
+    }
+  }, [activeIndex]);
 
-      const diff = i - activeIdx;
-      const absDiff = Math.abs(diff);
-
-      const isActive = diff === 0;
-      const zIndex = 10 - absDiff;
-
-      const scale = isActive ? 1 : 0.8 - absDiff * 0.1;
-      const xOffset = diff * (window.innerWidth < 768 ? 140 : 250);
-      const yOffset = absDiff * 30;
-
-      const rotationY = diff * -25;
-      const rotationZ = diff * 5;
-
-      gsap.set(card, { zIndex });
-
-      gsap.to(card, {
-        x: xOffset,
-        y: yOffset,
-        scale: scale,
-        rotationY: rotationY,
-        rotationZ: rotationZ,
-        rotationX: 0,
-        opacity: isActive ? 1 : 0.4,
-        filter: isActive ? "grayscale(0%)" : "grayscale(60%)",
-        duration: isInitial ? 2 : 0.8,
-        delay: isInitial ? i * 0.15 : 0,
-        ease: isInitial ? "back.out(1.2)" : "power3.out",
-        overwrite: "auto",
-      });
-    });
-  });
-
-  // Hook into initialization after triggerLayout is defined
   useGSAP(
     () => {
       if (!containerRef.current) return;
 
-      // Initial hidden state
-      gsap.set(cardsRef.current, {
-        y: 400,
+      const cards = cardsRef.current.filter(
+        (card): card is HTMLDivElement => card !== null,
+      );
+      if (cards.length === 0) return;
+
+      const triggerLayout = (activeIdx: number, isInitial = false) => {
+        const xSpacing = getXSpacing();
+
+        cards.forEach((card, i) => {
+          const diff = i - activeIdx;
+          const absDiff = Math.abs(diff);
+          const isActive = diff === 0;
+          const zIndex = 10 - absDiff;
+          const scale = Math.max(0.58, isActive ? 1 : 0.82 - absDiff * 0.1);
+          const xOffset = diff * xSpacing;
+          const yOffset = absDiff * 30;
+
+          gsap.killTweensOf(card);
+          gsap.set(card, { zIndex });
+          gsap.to(card, {
+            x: xOffset,
+            y: yOffset,
+            scale,
+            rotationY: diff * -25,
+            rotationZ: diff * 5,
+            rotationX: 0,
+            opacity: isActive ? 1 : 0.45,
+            duration: isInitial ? 1.4 : 0.55,
+            delay: isInitial ? i * 0.1 : 0,
+            ease: isInitial ? "back.out(1.12)" : "power2.out",
+            overwrite: "auto",
+            force3D: true,
+          });
+        });
+      };
+
+      triggerLayoutRef.current = triggerLayout;
+
+      gsap.set(cards, {
+        y: 320,
         opacity: 0,
-        rotationX: 45,
-        scale: 0.5,
+        rotationX: 40,
+        scale: 0.6,
         transformPerspective: 1200,
         transformOrigin: "50% 50% -200px",
       });
 
-      ScrollTrigger.create({
+      const scrollTrigger = ScrollTrigger.create({
         trigger: containerRef.current,
-        start: "top 50%",
+        start: "top 55%",
+        once: true,
         onEnter: () => {
-          triggerLayout(activeIndex, true);
+          hasEnteredRef.current = true;
+          triggerLayout(activeIndexRef.current, true);
         },
       });
+
+      const handleResize = () => {
+        if (hasEnteredRef.current) {
+          triggerLayout(activeIndexRef.current, false);
+        }
+      };
+      window.addEventListener("resize", handleResize, { passive: true });
+
+      return () => {
+        window.removeEventListener("resize", handleResize);
+        scrollTrigger.kill();
+      };
     },
-    { scope: containerRef, dependencies: [activeIndex] },
+    { scope: containerRef },
   );
 
-  const handleCardClick = (index: number) => {
-    if (index === activeIndex) return;
-    setActiveIndex(index);
-    triggerLayout(index, false);
-  };
+  const handleCardClick = useCallback((index: number) => {
+    setActiveIndex((current) => (current === index ? current : index));
+  }, []);
 
-  const navigate = (direction: "next" | "prev") => {
-    const nextIdx =
+  const navigate = useCallback((direction: "next" | "prev") => {
+    setActiveIndex((current) =>
       direction === "next"
-        ? (activeIndex + 1) % EXPERIENCES.length
-        : (activeIndex - 1 + EXPERIENCES.length) % EXPERIENCES.length;
-    setActiveIndex(nextIdx);
-    triggerLayout(nextIdx);
-  };
+        ? (current + 1) % EXPERIENCES.length
+        : (current - 1 + EXPERIENCES.length) % EXPERIENCES.length,
+    );
+  }, []);
 
   return (
     <section
@@ -139,9 +165,9 @@ const GameExperiences = () => {
           </button>
 
           <div className="flex justify-center gap-4">
-            {EXPERIENCES.map((_, i) => (
+            {EXPERIENCES.map((exp, i) => (
               <button
-                key={i}
+                key={exp.id}
                 onClick={() => handleCardClick(i)}
                 className={`w-4 h-4 rounded-full transition-all duration-300 cursor-pointer ${
                   activeIndex === i

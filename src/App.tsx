@@ -41,7 +41,6 @@ function App() {
 
     const tickerCallback = (time: number) => {
       lenis.raf(time * 1000);
-      ScrollTrigger.update();
     };
 
     gsap.ticker.add(tickerCallback);
