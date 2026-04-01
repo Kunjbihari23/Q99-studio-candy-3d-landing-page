@@ -1,4 +1,5 @@
-import { useThree, type ThreeEvent } from "@react-three/fiber";
+import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
+import * as THREE from "three";
 import {
   useCallback,
   useEffect,
@@ -278,7 +279,7 @@ const Match3Board = ({
 
   return (
     <group>
-      <mesh position={[0, 0, -0.55]} receiveShadow>
+      <mesh position={[0, 0, -0.78]} receiveShadow>
         <boxGeometry args={[7.8, 7.8, 0.36]} />
         <meshStandardMaterial
           color="#2a1233"
@@ -286,7 +287,15 @@ const Match3Board = ({
           metalness={0.18}
         />
       </mesh>
-      <mesh position={[0, 0, -0.3]} receiveShadow>
+      <mesh position={[0, 0, -1.02]} receiveShadow>
+        <boxGeometry args={[8.5, 8.5, 0.2]} />
+        <meshStandardMaterial
+          color="#12051a"
+          roughness={0.7}
+          metalness={0.08}
+        />
+      </mesh>
+      <mesh position={[0, 0, -0.44]} receiveShadow>
         <planeGeometry args={[7.3, 7.3]} />
         <meshBasicMaterial color="#16071e" transparent opacity={0.9} />
       </mesh>
@@ -310,6 +319,50 @@ const Match3Board = ({
   );
 };
 
+const DepthFX = ({ active }: { active: boolean }) => {
+  const rootRef = useRef<THREE.Group>(null);
+  const nearOrbRef = useRef<THREE.Mesh>(null);
+  const farOrbRef = useRef<THREE.Mesh>(null);
+
+  useFrame(({ clock }, delta) => {
+    if (!active) {
+      return;
+    }
+
+    const t = clock.getElapsedTime();
+    const root = rootRef.current;
+    const nearOrb = nearOrbRef.current;
+    const farOrb = farOrbRef.current;
+    if (!root || !nearOrb || !farOrb) {
+      return;
+    }
+
+    root.rotation.y = THREE.MathUtils.damp(
+      root.rotation.y,
+      Math.sin(t * 0.35) * 0.1,
+      3.2,
+      delta,
+    );
+    nearOrb.position.x = 3.85 + Math.sin(t * 1.1) * 0.35;
+    nearOrb.position.y = -3.4 + Math.cos(t * 1.6) * 0.24;
+    farOrb.position.x = -4.2 + Math.cos(t * 0.85) * 0.3;
+    farOrb.position.y = 3.2 + Math.sin(t * 1.3) * 0.22;
+  });
+
+  return (
+    <group ref={rootRef}>
+      <mesh ref={nearOrbRef} position={[3.85, -3.4, 1.65]}>
+        <sphereGeometry args={[0.3, 22, 22]} />
+        <meshBasicMaterial color="#8ff5ff" transparent opacity={0.3} />
+      </mesh>
+      <mesh ref={farOrbRef} position={[-4.2, 3.2, -1.7]}>
+        <sphereGeometry args={[0.42, 22, 22]} />
+        <meshBasicMaterial color="#ff9ae6" transparent opacity={0.24} />
+      </mesh>
+    </group>
+  );
+};
+
 const Match3World = ({ activeIndex }: { activeIndex: number }) => {
   const { viewport } = useThree();
   const sceneLayout = useMemo(() => {
@@ -325,11 +378,35 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
   const [board, setBoard] = useState<Board>(() => createInitialBoard());
   const [selectedCell, setSelectedCell] = useState<GridPosition | null>(null);
   const [busy, setBusy] = useState(false);
+  const worldRootRef = useRef<THREE.Group>(null);
 
   const boardRef = useRef(board);
   const busyRef = useRef(false);
   const dragRef = useRef<DragState | null>(null);
   const { playPop, playBurst, resume } = useSound({ volume: 0.12 });
+  const isSectionActive = Math.abs(activeIndex - 2) < 0.95;
+
+  useFrame(({ pointer }, delta) => {
+    const world = worldRootRef.current;
+    if (!world || !isSectionActive) {
+      return;
+    }
+
+    const targetRotX = -0.18 + pointer.y * 0.045;
+    const targetRotY = pointer.x * 0.08;
+    world.rotation.x = THREE.MathUtils.damp(
+      world.rotation.x,
+      targetRotX,
+      4.5,
+      delta,
+    );
+    world.rotation.y = THREE.MathUtils.damp(
+      world.rotation.y,
+      targetRotY,
+      4.2,
+      delta,
+    );
+  });
 
   useEffect(() => {
     boardRef.current = board;
@@ -495,11 +572,33 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
 
   return (
     <group
+      ref={worldRootRef}
       position={[sceneLayout.x, sceneLayout.y, 0]}
       scale={[sceneLayout.scale, sceneLayout.scale, sceneLayout.scale]}
     >
       <ambientLight intensity={0.72} />
       <directionalLight position={[4, 7, 5]} intensity={1.25} color="#fff4f8" />
+      <pointLight
+        position={[3.2, 2.5, 3.1]}
+        intensity={22}
+        distance={18}
+        color="#79efff"
+      />
+      <pointLight
+        position={[-3.3, -2.3, 2.7]}
+        intensity={18}
+        distance={16}
+        color="#ffa0ea"
+      />
+
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, -5.2, -1.6]}
+        receiveShadow
+      >
+        <circleGeometry args={[5.9, 64]} />
+        <meshBasicMaterial color="#0b0412" transparent opacity={0.66} />
+      </mesh>
 
       <Match3Board
         board={board}
@@ -508,6 +607,7 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
         activeIndex={activeIndex}
         onTilePointerDown={handleTilePointerDown}
       />
+      <DepthFX active={isSectionActive} />
     </group>
   );
 };

@@ -17,6 +17,7 @@ import {
 } from "../../systems/useScrollCamera";
 import HeroSection from "../hero/Hero";
 import SodaScene from "../soda/SodaScene";
+import { ASSETS } from "../../utils/assets";
 
 const LazyCandyLabWorld = lazy(() => import("./world/CandyLabWorld"));
 const LazyMatch3World = lazy(() => import("./world/Match3World"));
@@ -114,12 +115,16 @@ const HeroWorld = () => {
   );
 };
 
-useGLTF.preload("/Glb-Models/candy_pink.glb");
-useGLTF.preload("/Glb-Models/candy_model_green.glb");
-useGLTF.preload("/Glb-Models/Mix_candy.glb");
-useGLTF.preload("/Glb-Models/red_candy_monster.glb");
-useGLTF.preload("/Glb-Models/Color_Full_Candy.glb");
-useGLTF.preload("/Glb-Models/candy_stick.glb");
+const PRELOADED_MODELS = [
+  ASSETS.glb.candyPink,
+  ASSETS.glb.candyGreen,
+  ASSETS.glb.candyMix,
+  ASSETS.glb.candyRed,
+  ASSETS.glb.candyColorFull,
+  ASSETS.glb.candyStick,
+];
+
+PRELOADED_MODELS.forEach((model) => useGLTF.preload(model));
 
 const CameraRig = ({
   targetRef,

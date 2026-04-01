@@ -1,8 +1,9 @@
-import { memo, useRef } from "react";
+import { Clone, useGLTF } from "@react-three/drei";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
+import { memo, useEffect, useRef } from "react";
 import * as THREE from "three";
-import { useGLTF, Clone } from "@react-three/drei";
 import { useMicroMotion } from "../../systems/useMicroMotion";
+import { ASSETS } from "../../utils/assets";
 
 export type CandyType = "berry" | "mint" | "lemon" | "grape" | "soda" | "peach";
 
@@ -15,12 +16,12 @@ export interface CandyTileData {
 }
 
 const MODEL_PATH_BY_TYPE: Record<CandyType, string> = {
-  berry: "/Glb-Models/candy_pink.glb",
-  mint: "/Glb-Models/candy_model_green.glb",
-  lemon: "/Glb-Models/Color_Full_Candy.glb",
-  grape: "/Glb-Models/Mix_candy.glb",
-  soda: "/Glb-Models/candy_stick.glb",
-  peach: "/Glb-Models/red_candy_monster.glb",
+  berry: ASSETS.glb.candyPink,
+  mint: ASSETS.glb.candyGreen,
+  lemon: ASSETS.glb.candyColorFull,
+  grape: ASSETS.glb.candyMix,
+  soda: ASSETS.glb.candyStick,
+  peach: ASSETS.glb.candyRed,
 };
 
 Object.values(MODEL_PATH_BY_TYPE).forEach((path) => {
@@ -38,6 +39,12 @@ interface CandyTileProps {
     event: ThreeEvent<PointerEvent>,
   ) => void;
 }
+
+const setCursor = (value: string) => {
+  if (typeof document !== "undefined") {
+    document.body.style.cursor = value;
+  }
+};
 
 const CandyTile = memo(
   ({
@@ -58,6 +65,10 @@ const CandyTile = memo(
       hoverGlow: 0.18,
     });
     const { scene } = useGLTF(MODEL_PATH_BY_TYPE[tile.type]);
+
+    useEffect(() => {
+      return () => setCursor("");
+    }, []);
 
     useFrame(({ clock }, delta) => {
       // Gate the animation loop if the section is not active
@@ -119,8 +130,16 @@ const CandyTile = memo(
     return (
       <group ref={groupRef} position={position}>
         <group
-          onPointerOver={microMotion.handlePointerOver}
-          onPointerOut={microMotion.handlePointerOut}
+          onPointerOver={(event) => {
+            microMotion.handlePointerOver(event);
+            if (!disabled) {
+              setCursor("pointer");
+            }
+          }}
+          onPointerOut={(event) => {
+            microMotion.handlePointerOut(event);
+            setCursor("");
+          }}
           onPointerDown={handlePointerDown}
         >
           <Clone object={scene} scale={0.9} rotation={[0, Math.PI / 0.29, 0]} />

@@ -2,14 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
+import { ASSETS } from "../../../utils/assets";
 import ParticleBurst from "../../../systems/ParticleBurst";
 import { useSound } from "../../../systems/useSound";
 
 const RAIN_COUNT = 20;
 const CANDY_TYPES = [
-  "/Glb-Models/candy_pink.glb",
-  "/Glb-Models/candy_model_green.glb",
-  "/Glb-Models/Mix_candy.glb",
+  ASSETS.glb.candyPink,
+  ASSETS.glb.candyGreen,
+  ASSETS.glb.candyMix,
 ];
 const RAIN_PER_TYPE = Math.ceil(RAIN_COUNT / CANDY_TYPES.length);
 const FALL_AREA = {

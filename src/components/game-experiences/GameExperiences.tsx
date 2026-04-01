@@ -2,14 +2,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ASSETS } from "../../utils/assets";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const EXPERIENCES = [
-  { id: 1, src: "/Images/experience/exp1.jpeg", title: "Vibrant Puzzles" },
-  { id: 2, src: "/Images/experience/exp2.jpeg", title: "Epic Powerups" },
-  { id: 3, src: "/Images/experience/exp3.jpeg", title: "Candy Combos" },
-  { id: 4, src: "/Images/experience/exp4.jpeg", title: "Global Leaderboards" },
+  { id: 1, src: ASSETS.images.experiences[0], title: "Vibrant Puzzles" },
+  { id: 2, src: ASSETS.images.experiences[1], title: "Epic Powerups" },
+  { id: 3, src: ASSETS.images.experiences[2], title: "Candy Combos" },
+  { id: 4, src: ASSETS.images.experiences[3], title: "Global Leaderboards" },
 ];
 
 const MOBILE_BREAKPOINT = 768;

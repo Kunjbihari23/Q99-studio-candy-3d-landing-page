@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import Section from "../global/Section";
+import { ASSETS } from "../../utils/assets";
 
 // Module-level flag: once the intro has played, never wait again
 let introHasPlayed = false;
@@ -31,22 +32,43 @@ const HeroSection = () => {
   useGSAP(
     () => {
       if (!bgReady) return;
-      const els = [logoRef.current, titleRef.current, subtitleRef.current, btnRef.current];
+      const els = [
+        logoRef.current,
+        titleRef.current,
+        subtitleRef.current,
+        btnRef.current,
+      ];
 
       if (introHasPlayed && bgReady) {
         // Remount: quick fade-in, no dramatic intro
         gsap.fromTo(
           els,
           { opacity: 0, y: 20 },
-          { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, ease: "power2.out" },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.4,
+            stagger: 0.08,
+            ease: "power2.out",
+          },
         );
 
         // Restart continuous animations
         gsap.to(logoRef.current, {
-          y: -15, duration: 2, ease: "sine.inOut", yoyo: true, repeat: -1, delay: 0.5,
+          y: -15,
+          duration: 2,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          delay: 0.5,
         });
         gsap.to(titleRef.current, {
-          scale: 1.03, duration: 2, yoyo: true, repeat: -1, ease: "sine.inOut", delay: 0.5,
+          scale: 1.03,
+          duration: 2,
+          yoyo: true,
+          repeat: -1,
+          ease: "sine.inOut",
+          delay: 0.5,
         });
         return;
       }
@@ -64,11 +86,21 @@ const HeroSection = () => {
       );
 
       gsap.to(logoRef.current, {
-        y: -15, duration: 2, ease: "sine.inOut", yoyo: true, repeat: -1, delay: 1.4,
+        y: -15,
+        duration: 2,
+        ease: "sine.inOut",
+        yoyo: true,
+        repeat: -1,
+        delay: 1.4,
       });
 
       gsap.to(titleRef.current, {
-        scale: 1.03, duration: 2, yoyo: true, repeat: -1, ease: "sine.inOut", delay: 2.2,
+        scale: 1.03,
+        duration: 2,
+        yoyo: true,
+        repeat: -1,
+        ease: "sine.inOut",
+        delay: 2.2,
       });
 
       tl.fromTo(
@@ -92,7 +124,7 @@ const HeroSection = () => {
           <img
             ref={logoRef}
             className="glow-shadow z-10 aspect-square w-[clamp(12rem,25vw,22rem)] sm:w-[clamp(16rem,300vw,28rem)] will-change-transform opacity-0"
-            src="/Images/hero_bg.png"
+            src={ASSETS.images.heroBackground}
             alt="Jelzy Candy Rush Logo"
           />
         </div>
@@ -122,7 +154,7 @@ const HeroSection = () => {
         >
           <img
             className="w-36 sm:w-44 md:w-48 drop-shadow-lg"
-            src="/playStore.png"
+            src={ASSETS.images.heroPlaystoreBtn}
             alt="google play store button"
           />
         </a>
@@ -132,5 +164,3 @@ const HeroSection = () => {
 };
 
 export default HeroSection;
-
-
