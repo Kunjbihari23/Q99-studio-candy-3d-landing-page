@@ -1,8 +1,9 @@
-import { useCallback, useState } from "react";
 import { useThree } from "@react-three/fiber";
-import CandyBlob from "../../candy/CandyBlob";
+import { useCallback, useState } from "react";
+import * as THREE from "three";
 import ParticleBurst from "../../../systems/ParticleBurst";
 import { useSound } from "../../../systems/useSound";
+import CandyBlob from "../../candy/CandyBlob";
 
 interface BurstState {
   id: number;
@@ -11,11 +12,11 @@ interface BurstState {
 
 let burstId = 0;
 
-const CandyLabWorld = () => {
+const CandyLabWorld = ({ centered = false }: { centered?: boolean }) => {
   const [burst, setBurst] = useState<BurstState | null>(null);
   const { viewport } = useThree();
   const isMobile = viewport.width <= 6;
-  const sceneX = isMobile ? 0.7 : 1.3;
+  const sceneX = centered ? 0 : isMobile ? 0.7 : 1.3;
   const sceneScale = isMobile ? 0.75 : 0.95;
   const { playBurst } = useSound({ volume: 0.12 });
 
@@ -53,7 +54,12 @@ const CandyLabWorld = () => {
           receiveShadow
         >
           <circleGeometry args={[3.8, 64]} />
-          <meshBasicMaterial color="#1b0928" transparent opacity={0.9} />
+          <meshBasicMaterial
+            color="#1b0928"
+            side={THREE.DoubleSide}
+            transparent
+            opacity={0.9}
+          />
         </mesh>
 
         <mesh position={[0, -1.4, 0]}>
@@ -64,12 +70,18 @@ const CandyLabWorld = () => {
             roughness={0.28}
             emissive="#21072d"
             emissiveIntensity={0.24}
+            side={THREE.DoubleSide}
           />
         </mesh>
 
         <mesh position={[0, -1.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[1.15, 1.8, 64]} />
-          <meshBasicMaterial color="#7ef3ff" transparent opacity={0.25} />
+          <meshBasicMaterial
+            color="#7ef3ff"
+            side={THREE.DoubleSide}
+            transparent
+            opacity={0.25}
+          />
         </mesh>
 
         <CandyBlob position={[0, 0.3, 0]} onRelease={handleRelease} />

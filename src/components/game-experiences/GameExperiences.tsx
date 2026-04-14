@@ -26,7 +26,10 @@ const GameExperiences = () => {
   >(() => {});
 
   const getXSpacing = useCallback(
-    () => (window.innerWidth < MOBILE_BREAKPOINT ? 140 : 250),
+    () =>
+      window.innerWidth < MOBILE_BREAKPOINT
+        ? 140
+        : Math.min(250, window.innerWidth * 0.15),
     [],
   );
 
@@ -128,16 +131,20 @@ const GameExperiences = () => {
   return (
     <section
       ref={containerRef}
-      className="relative w-full min-h-[120vh] bg-[#12061f] py-32 overflow-hidden flex flex-col items-center z-20"
+      className="relative z-20 flex w-full flex-col items-center overflow-hidden bg-[#12061f] py-6 sm:py-16 lg:py-24"
+      style={{ minHeight: "fit-content" }}
     >
-      <div className="absolute inset-0 top-0 h-40 bg-linear-to-b from-[#12061f] to-transparent z-10" />
+      <div className="absolute inset-0 h-40 bg-linear-to-b from-[#12061f] to-transparent z-10" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#2a0d45_0%,transparent_70%)] opacity-60" />
 
-      <div className="container-custom relative z-20 text-center mb-20 pointer-events-none">
-        <span className="inline-flex rounded-full border border-white/14 bg-white/8 px-4 py-1 font-orbitron text-sm uppercase tracking-[0.3em] text-[#ff8ac5] shadow-[0_0_20px_rgba(255,138,197,0.3)]">
+      <div className="container-custom pointer-events-none relative z-20 mb-6 sm:mb-14 text-center">
+        <span className="inline-flex rounded-full border border-white/14 bg-white/8 px-3 py-0.5 font-orbitron text-xs uppercase tracking-[0.3em] text-[#ff8ac5] shadow-[0_0_20px_rgba(255,138,197,0.3)]">
           Sneak Peek
         </span>
-        <h2 className="mt-6 font-orbitron text-5xl md:text-7xl font-bold text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+        <h2
+          className="mt-3 sm:mt-6 font-orbitron font-bold text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+          style={{ fontSize: "min(6vh, 5vw, 3.5rem)" }}
+        >
           Game{" "}
           <span className="text-transparent bg-clip-text bg-linear-to-r from-[#76e0ff] to-[#ff74c6]">
             Experiences
@@ -145,14 +152,14 @@ const GameExperiences = () => {
         </h2>
 
         {/* Navigation Dot & Arrows */}
-        <div className="flex items-center justify-center gap-8 mt-12 pointer-events-auto">
+        <div className="pointer-events-auto mt-4 sm:mt-10 flex items-center justify-center gap-3 sm:gap-8">
           <button
             onClick={() => navigate("prev")}
-            className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center text-white bg-white/5 hover:bg-white/10 hover:border-white/30 transition-all group active:scale-95 cursor-pointer"
+            className="group flex h-9 w-9 sm:h-12 sm:w-12 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-all hover:border-white/30 hover:bg-white/10 active:scale-95"
           >
             <svg
-              width="32"
-              height="32"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -165,12 +172,12 @@ const GameExperiences = () => {
             </svg>
           </button>
 
-          <div className="flex justify-center gap-4">
+          <div className="flex justify-center gap-2 sm:gap-4">
             {EXPERIENCES.map((exp, i) => (
               <button
                 key={exp.id}
                 onClick={() => handleCardClick(i)}
-                className={`w-4 h-4 rounded-full transition-all duration-300 cursor-pointer ${
+                className={`h-3 w-3 sm:h-3.5 sm:w-3.5 cursor-pointer rounded-full transition-all duration-300 ${
                   activeIndex === i
                     ? "bg-[#76e0ff] scale-125 shadow-[0_0_15px_#76e0ff]"
                     : "bg-white/20 hover:bg-white/40"
@@ -181,11 +188,11 @@ const GameExperiences = () => {
 
           <button
             onClick={() => navigate("next")}
-            className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center text-white bg-white/5 hover:bg-white/10 hover:border-white/30 transition-all group active:scale-95 cursor-pointer"
+            className="group flex h-9 w-9 sm:h-12 sm:w-12 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-all hover:border-white/30 hover:bg-white/10 active:scale-95"
           >
             <svg
-              width="32"
-              height="32"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -200,7 +207,10 @@ const GameExperiences = () => {
         </div>
       </div>
 
-      <div className="relative w-full max-w-7xl mx-auto flex justify-center items-center h-[540px] md:h-[640px] perspective-[1500px] mt-10">
+      <div
+        className="relative mx-auto mt-4 sm:mt-8 flex w-full max-w-7xl items-center justify-center perspective-[1500px]"
+        style={{ height: "min(460px, 55vh)" }}
+      >
         {EXPERIENCES.map((exp, i) => {
           const isActive = activeIndex === i;
 
@@ -211,11 +221,10 @@ const GameExperiences = () => {
                 cardsRef.current[i] = el;
               }}
               onClick={() => handleCardClick(i)}
-              className="absolute w-[240px] sm:w-[280px] md:w-[320px] lg:w-[400px] aspect-9/16 rounded-[2.5rem] overflow-hidden border border-white/10 group will-change-transform cursor-pointer shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)]"
+              className="group absolute aspect-9/16 cursor-pointer overflow-hidden rounded-[1.5rem] border border-white/10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] will-change-transform"
+              style={{ width: "min(250px, 22vw, 35vh)" }}
             >
-              <div
-                className={`absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-black/90 z-10 transition-opacity duration-500`}
-              />
+              <div className="absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-black/90 z-10 transition-opacity duration-500" />
 
               <img
                 src={exp.src}
@@ -224,22 +233,25 @@ const GameExperiences = () => {
               />
 
               <div
-                className={`absolute bottom-0 left-0 right-0 p-8 z-20 transition-all duration-500 flex flex-col items-center justify-end ${isActive ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 group-hover:translate-y-2 group-hover:opacity-100"}`}
+                className={`absolute bottom-0 left-0 right-0 z-20 flex flex-col items-center justify-end p-3 sm:p-5 transition-all duration-500 ${isActive ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 group-hover:translate-y-2 group-hover:opacity-100"}`}
               >
-                <h3 className="font-orbitron font-bold text-2xl md:text-3xl text-white drop-shadow-lg shadow-black text-center uppercase tracking-wider">
+                <h3
+                  className="text-center font-orbitron font-bold uppercase tracking-wider text-white drop-shadow-lg shadow-black"
+                  style={{ fontSize: "min(2.5vh, 1.8vw, 1.1rem)" }}
+                >
                   {exp.title}
                 </h3>
-                <div className="mt-4 w-16 h-1.5 bg-linear-to-r from-[#76e0ff] to-[#ff74c6] rounded-full shadow-[0_0_15px_rgba(255,116,198,0.6)]" />
+                <div className="mt-2 w-12 h-1 bg-linear-to-r from-[#76e0ff] to-[#ff74c6] rounded-full shadow-[0_0_15px_rgba(255,116,198,0.6)]" />
               </div>
 
               {/* Active Glow */}
               <div
-                className={`absolute inset-0 shadow-[inset_0_0_60px_rgba(118,224,255,0.3)] transition-opacity duration-500 z-30 pointer-events-none rounded-[2.5rem] border-2 border-[#76e0ff]/30 ${isActive ? "opacity-100" : "opacity-0"}`}
+                className={`absolute inset-0 shadow-[inset_0_0_60px_rgba(118,224,255,0.3)] transition-opacity duration-500 z-30 pointer-events-none rounded-[1.5rem] border-2 border-[#76e0ff]/30 ${isActive ? "opacity-100" : "opacity-0"}`}
               />
 
               {/* Hover Glow (Inactive cards) */}
               <div
-                className={`absolute inset-0 bg-white/5 transition-opacity duration-500 z-30 pointer-events-none rounded-[2.5rem] ${!isActive ? "opacity-0 group-hover:opacity-100" : "opacity-0"}`}
+                className={`absolute inset-0 bg-white/5 transition-opacity duration-500 z-30 pointer-events-none rounded-[1.5rem] ${!isActive ? "opacity-0 group-hover:opacity-100" : "opacity-0"}`}
               />
             </div>
           );

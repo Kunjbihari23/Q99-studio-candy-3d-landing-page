@@ -1,12 +1,11 @@
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { useEffect } from "react";
 import CandyLoader from "./components/common/CandyLoader";
 import ContactUs from "./components/contact/ContactUs";
 import ExperienceWorld from "./components/experience/ExperienceWorld";
 import GameExperiences from "./components/game-experiences/GameExperiences";
-import Outlet from "./components/layout/Outlet";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 function App() {
@@ -60,13 +59,11 @@ function App() {
     };
   }, []);
   return (
-    <Outlet>
-      <CandyLoader>
-        <ExperienceWorld />
-        <GameExperiences />
-        <ContactUs />
-      </CandyLoader>
-    </Outlet>
+    <CandyLoader>
+      <ExperienceWorld />
+      <GameExperiences />
+      <ContactUs />
+    </CandyLoader>
   );
 }
 

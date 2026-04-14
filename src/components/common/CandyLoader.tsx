@@ -12,6 +12,7 @@ import { Suspense, useRef, useState, useEffect } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
 import { ASSETS } from "../../utils/assets";
+import { useViewportProfile } from "../../hooks/useViewportProfile";
 
 // All models used across the entire application to ensure they are preloaded
 const ALL_MODELS = [
@@ -111,7 +112,7 @@ const LoaderUI = ({
 
   return (
     <Html center>
-      <div className="flex flex-col items-center justify-center w-[90vw] md:w-[480px]">
+      <div className="flex flex-col items-center justify-center mt-80 w-[90vw] md:w-[480px]">
         <div className="relative w-full h-4 bg-white/5 rounded-full overflow-hidden backdrop-blur-3xl border border-white/10 p-1 shadow-2xl">
           <div
             className="h-full bg-gradient-to-r from-[#ff5fb2] via-[#ffe38a] to-[#7ef3ff] rounded-full shadow-[0_0_30px_rgba(255,95,178,0.6)]"
@@ -145,6 +146,8 @@ const CandyLoader = ({ children }: { children: React.ReactNode }) => {
 
   const loadingFinished = !active && progress === 100;
 
+  const profile = useViewportProfile();
+
   useEffect(() => {
     if (showContent && containerRef.current) {
       gsap.fromTo(
@@ -159,7 +162,12 @@ const CandyLoader = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="fixed inset-0 z-[999] bg-[#0c0411] cursor-wait overflow-hidden">
-      <Canvas camera={{ position: [0, 0, 8.5], fov: 42 }}>
+      <Canvas
+        camera={{
+          position: [0, 0, 8.5],
+          fov: profile.width > 768 ? 42 : profile.width > 768 ? 60 : 70,
+        }}
+      >
         <fog attach="fog" args={["#0c0411", 7, 20]} />
 
         <Environment preset="night" />
@@ -181,7 +189,7 @@ const CandyLoader = ({ children }: { children: React.ReactNode }) => {
 
         <Suspense fallback={null}>
           <AssetPreloader />
-          <group position={[0, -0.6, 0]}>
+          <group position={[0, -1, 0]}>
             <CenterPiece />
             <Sparkles
               count={120}

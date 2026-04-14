@@ -17,6 +17,7 @@ import CandyTile, {
 const GRID_SIZE = 6;
 const TILE_GAP = 1.08;
 const SWAP_DRAG_THRESHOLD = 28;
+const SWAP_DRAG_THRESHOLD_TOUCH = 12;
 const SWAP_ANIMATION_MS = 180;
 const CASCADE_DELAY_MS = 220;
 const REFILL_DELAY_MS = 240;
@@ -42,10 +43,20 @@ interface GridPosition {
 interface DragState {
   row: number;
   col: number;
+  pointerType: string;
   startX: number;
   startY: number;
   currentX: number;
   currentY: number;
+}
+
+type PointerCaptureTarget = Element;
+
+interface ScrollLockSnapshot {
+  htmlOverflow: string;
+  bodyOverflow: string;
+  htmlTouchAction: string;
+  bodyTouchAction: string;
 }
 
 let tileSequence = 0;
@@ -251,6 +262,12 @@ const wait = (duration: number) =>
     window.setTimeout(resolve, duration);
   });
 
+interface Match3HintAnchorDetail {
+  x: number;
+  y: number;
+  visible: boolean;
+}
+
 const Match3Board = ({
   board,
   selectedCell,
@@ -363,17 +380,23 @@ const DepthFX = ({ active }: { active: boolean }) => {
   );
 };
 
-const Match3World = ({ activeIndex }: { activeIndex: number }) => {
-  const { viewport } = useThree();
+const Match3World = ({
+  activeIndex,
+  centered = false,
+}: {
+  activeIndex: number;
+  centered?: boolean;
+}) => {
+  const { viewport, camera, size } = useThree();
   const sceneLayout = useMemo(() => {
     const isMobile = viewport.width <= 12;
     const smallPC = viewport.width <= 16;
     return {
-      x: isMobile ? 1.5 : smallPC ? -1.8 : -0.5,
-      y: smallPC ? -4 : 0,
+      x: centered ? 0 : isMobile ? 1.5 : smallPC ? -1.8 : -0.5,
+      y: centered ? -0.8 : smallPC ? -4 : 0,
       scale: isMobile ? 0.4 : 0.5,
     };
-  }, [viewport.width]);
+  }, [centered, viewport.width]);
 
   const [board, setBoard] = useState<Board>(() => createInitialBoard());
   const [selectedCell, setSelectedCell] = useState<GridPosition | null>(null);
@@ -383,30 +406,119 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
   const boardRef = useRef(board);
   const busyRef = useRef(false);
   const dragRef = useRef<DragState | null>(null);
+  const hintAnchorLocalRef = useRef(new THREE.Vector3(0, 4.35, 0));
+  const hintAnchorWorldRef = useRef(new THREE.Vector3());
+  const hintProjectedRef = useRef(new THREE.Vector3());
+  const hintLastDetailRef = useRef<Match3HintAnchorDetail>({
+    x: 0,
+    y: 0,
+    visible: false,
+  });
+  const dragPointerIdRef = useRef<number | null>(null);
+  const dragPointerTargetRef = useRef<PointerCaptureTarget | null>(null);
+  const scrollLockRef = useRef<ScrollLockSnapshot | null>(null);
   const { playPop, playBurst, resume } = useSound({ volume: 0.12 });
   const isSectionActive = Math.abs(activeIndex - 2) < 0.95;
 
-  useFrame(({ pointer }, delta) => {
-    const world = worldRootRef.current;
-    if (!world || !isSectionActive) {
+  const unlockPageScroll = useCallback(() => {
+    const snapshot = scrollLockRef.current;
+    if (!snapshot) {
       return;
     }
 
-    const targetRotX = -0.18 + pointer.y * 0.045;
-    const targetRotY = pointer.x * 0.08;
-    world.rotation.x = THREE.MathUtils.damp(
-      world.rotation.x,
-      targetRotX,
-      4.5,
-      delta,
-    );
-    world.rotation.y = THREE.MathUtils.damp(
-      world.rotation.y,
-      targetRotY,
-      4.2,
-      delta,
-    );
+    document.documentElement.style.overflow = snapshot.htmlOverflow;
+    document.body.style.overflow = snapshot.bodyOverflow;
+    document.documentElement.style.touchAction = snapshot.htmlTouchAction;
+    document.body.style.touchAction = snapshot.bodyTouchAction;
+    document.documentElement.classList.remove("lenis-stopped");
+    document.body.classList.remove("lenis-stopped");
+    scrollLockRef.current = null;
+  }, []);
+
+  const lockPageScroll = useCallback(() => {
+    if (scrollLockRef.current) {
+      return;
+    }
+
+    scrollLockRef.current = {
+      htmlOverflow: document.documentElement.style.overflow,
+      bodyOverflow: document.body.style.overflow,
+      htmlTouchAction: document.documentElement.style.touchAction,
+      bodyTouchAction: document.body.style.touchAction,
+    };
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.touchAction = "none";
+    document.body.style.touchAction = "none";
+    document.documentElement.classList.add("lenis-stopped");
+    document.body.classList.add("lenis-stopped");
+  }, []);
+
+  useFrame(({ pointer }, delta) => {
+    const world = worldRootRef.current;
+    if (!world) {
+      return;
+    }
+
+    if (isSectionActive) {
+      const targetRotX = -0.18 + pointer.y * 0.045;
+      const targetRotY = pointer.x * 0.08;
+      world.rotation.x = THREE.MathUtils.damp(
+        world.rotation.x,
+        targetRotX,
+        4.5,
+        delta,
+      );
+      world.rotation.y = THREE.MathUtils.damp(
+        world.rotation.y,
+        targetRotY,
+        4.2,
+        delta,
+      );
+    }
+
+    let nextX = hintLastDetailRef.current.x;
+    let nextY = hintLastDetailRef.current.y;
+    let nextVisible = false;
+
+    if (isSectionActive) {
+      hintAnchorWorldRef.current.copy(hintAnchorLocalRef.current);
+      world.localToWorld(hintAnchorWorldRef.current);
+      hintProjectedRef.current.copy(hintAnchorWorldRef.current).project(camera);
+
+      nextX = (hintProjectedRef.current.x * 0.5 + 0.5) * size.width;
+      nextY = (-hintProjectedRef.current.y * 0.5 + 0.5) * size.height;
+      nextVisible =
+        hintProjectedRef.current.z > -1.1 && hintProjectedRef.current.z < 1.1;
+    }
+
+    const previous = hintLastDetailRef.current;
+    if (
+      Math.abs(previous.x - nextX) > 0.8 ||
+      Math.abs(previous.y - nextY) > 0.8 ||
+      previous.visible !== nextVisible
+    ) {
+      const detail: Match3HintAnchorDetail = {
+        x: nextX,
+        y: nextY,
+        visible: nextVisible,
+      };
+      hintLastDetailRef.current = detail;
+      window.dispatchEvent(new CustomEvent("match3-hint-anchor", { detail }));
+    }
   });
+
+  useEffect(() => {
+    return () => {
+      const detail: Match3HintAnchorDetail = {
+        x: hintLastDetailRef.current.x,
+        y: hintLastDetailRef.current.y,
+        visible: false,
+      };
+      window.dispatchEvent(new CustomEvent("match3-hint-anchor", { detail }));
+    };
+  }, []);
 
   useEffect(() => {
     boardRef.current = board;
@@ -488,27 +600,60 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
-      if (!dragRef.current) {
+      const activePointerId = dragPointerIdRef.current;
+      if (!dragRef.current || activePointerId === null) {
         return;
       }
 
+      if (event.pointerId !== activePointerId) {
+        return;
+      }
+
+      if (event.pointerType === "touch") {
+        event.preventDefault();
+      }
       dragRef.current.currentX = event.clientX;
       dragRef.current.currentY = event.clientY;
     };
 
-    const handlePointerUp = () => {
+    const releaseCaptureAndUnlock = () => {
+      const pointerTarget = dragPointerTargetRef.current;
+      const pointerId = dragPointerIdRef.current;
+      if (pointerTarget && pointerId !== null) {
+        pointerTarget.releasePointerCapture?.(pointerId);
+      }
+
+      dragPointerTargetRef.current = null;
+      dragPointerIdRef.current = null;
+      unlockPageScroll();
+    };
+
+    const handlePointerUp = (event: PointerEvent) => {
+      const activePointerId = dragPointerIdRef.current;
+      if (activePointerId === null || event.pointerId !== activePointerId) {
+        return;
+      }
+
       const drag = dragRef.current;
       if (!drag) {
+        releaseCaptureAndUnlock();
         return;
       }
 
       dragRef.current = null;
-      const deltaX = drag.currentX - drag.startX;
-      const deltaY = drag.currentY - drag.startY;
+      releaseCaptureAndUnlock();
+      const endX = event.clientX;
+      const endY = event.clientY;
+      const deltaX = endX - drag.startX;
+      const deltaY = endY - drag.startY;
       const magnitude = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+      const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+      const threshold =
+        drag.pointerType === "touch" || isCoarsePointer
+          ? SWAP_DRAG_THRESHOLD_TOUCH
+          : SWAP_DRAG_THRESHOLD;
 
-      if (magnitude < SWAP_DRAG_THRESHOLD) {
-        setSelectedCell(null);
+      if (magnitude < threshold) {
         return;
       }
 
@@ -536,38 +681,92 @@ const Match3World = ({ activeIndex }: { activeIndex: number }) => {
       void commitSwap({ row: drag.row, col: drag.col }, target);
     };
 
+    const handlePointerCancel = (event: PointerEvent) => {
+      const activePointerId = dragPointerIdRef.current;
+      if (activePointerId !== null && event.pointerId !== activePointerId) {
+        return;
+      }
+
+      dragRef.current = null;
+      releaseCaptureAndUnlock();
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (!dragRef.current) {
+        return;
+      }
+
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+    };
+
     window.addEventListener("pointermove", handlePointerMove, {
-      passive: true,
+      passive: false,
     });
     window.addEventListener("pointerup", handlePointerUp, { passive: true });
+    window.addEventListener("pointercancel", handlePointerCancel, {
+      passive: true,
+    });
+    window.addEventListener("touchmove", handleTouchMove, {
+      passive: false,
+    });
 
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerCancel);
+      window.removeEventListener("touchmove", handleTouchMove);
+      releaseCaptureAndUnlock();
     };
-  }, [commitSwap]);
+  }, [commitSwap, unlockPageScroll]);
 
   const handleTilePointerDown = useCallback(
     (tile: CandyTileData, event: ThreeEvent<PointerEvent>) => {
       // Resume audio context on user gesture
       resume();
+      window.dispatchEvent(new Event("match3-user-interacted"));
 
       if (busyRef.current) {
         return;
       }
 
+      // Touch-friendly path: allow tap-to-swap in addition to drag-to-swap.
+      // This avoids gesture conflicts with page scroll on small screens.
+      if (selectedCell) {
+        if (selectedCell.row === tile.row && selectedCell.col === tile.col) {
+          setSelectedCell(null);
+        } else if (
+          areAdjacent(selectedCell, { row: tile.row, col: tile.col })
+        ) {
+          void commitSwap(selectedCell, { row: tile.row, col: tile.col });
+        } else {
+          setSelectedCell({ row: tile.row, col: tile.col });
+        }
+      } else {
+        setSelectedCell({ row: tile.row, col: tile.col });
+      }
+
       const nextEvent = event as unknown as ReactPointerEvent;
+      const pointerTarget = event.nativeEvent.target as PointerCaptureTarget;
+      pointerTarget.setPointerCapture?.(event.pointerId);
+      dragPointerTargetRef.current = pointerTarget;
+      dragPointerIdRef.current = event.pointerId;
+      if (event.pointerType === "touch") {
+        lockPageScroll();
+      }
+
       dragRef.current = {
         row: tile.row,
         col: tile.col,
+        pointerType: event.pointerType,
         startX: nextEvent.clientX,
         startY: nextEvent.clientY,
         currentX: nextEvent.clientX,
         currentY: nextEvent.clientY,
       };
-      setSelectedCell({ row: tile.row, col: tile.col });
     },
-    [resume],
+    [commitSwap, lockPageScroll, resume, selectedCell],
   );
 
   return (

@@ -11,6 +11,7 @@ interface LiquidMeshProps {
   direction: SodaDirection;
   width?: number;
   height?: number;
+  aspectRatio?: number;
 }
 
 /** Converts a hex color string to an RGB array [0-1]. */
@@ -29,12 +30,25 @@ const LiquidMesh = ({
   direction,
   width = 12,
   height = 8,
+  aspectRatio,
 }: LiquidMeshProps) => {
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const meshRef = useRef<THREE.Mesh>(null);
   const primary = hexToRgb("#4DEAFE");
   const secondary = hexToRgb("#FE884D");
   const accent = hexToRgb("#FF50B0");
+
+  // Calculate responsive width based on viewport aspect ratio
+  const responsiveWidth = useMemo(() => {
+    if (!aspectRatio) return width;
+    // For wide screens (aspect > 2), increase width proportionally
+    if (aspectRatio > 2.2) {
+      return width * (aspectRatio / 1.4);
+    } else if (aspectRatio > 1.8) {
+      return width * 1.3;
+    }
+    return width;
+  }, [width, aspectRatio]);
 
   const uniforms = useMemo(
     () => ({
@@ -77,7 +91,7 @@ const LiquidMesh = ({
 
   return (
     <mesh ref={meshRef}>
-      <planeGeometry args={[width, height, 64, 32]} />
+      <planeGeometry args={[responsiveWidth, height, 64, 32]} />
       <shaderMaterial
         ref={materialRef}
         vertexShader={liquidVertexShader}

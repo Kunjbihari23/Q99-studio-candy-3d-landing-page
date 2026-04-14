@@ -114,51 +114,57 @@ const HeroSection = () => {
   );
 
   return (
-    <div ref={containerRef}>
-      <Section
-        divClassname="flex flex-col items-center justify-center text-center px-4"
-        className="relative py-10 sm:py-16 lg:py-24"
-      >
-        {/* Logo */}
-        <div className="flex justify-center items-center">
-          <img
-            ref={logoRef}
-            className="glow-shadow z-10 aspect-square w-[clamp(12rem,25vw,22rem)] sm:w-[clamp(16rem,300vw,28rem)] will-change-transform opacity-0"
-            src={ASSETS.images.heroBackground}
-            alt="Jelzy Candy Rush Logo"
-          />
-        </div>
-
-        {/* Title */}
-        <h1
-          ref={titleRef}
-          className="text-gradient-candy z-10 mt-4 text-[clamp(2.5rem,8vw,5rem)] font-bold font-orbitron leading-tight tracking-wide will-change-transform opacity-0"
+    <div>
+      <div ref={containerRef}>
+        <Section
+          divClassname="flex flex-col items-center justify-center text-center px-4"
+          className="relative py-4 sm:py-8 lg:py-12"
         >
-          Jelzy Candy Rush
-        </h1>
+          {/* Logo */}
+          <div className="flex justify-center items-center">
+            <img
+              ref={logoRef}
+              className="glow-shadow z-10 aspect-square will-change-transform opacity-0"
+              style={{ width: "min(35vh, 45vw, 18rem)" }}
+              src={ASSETS.images.heroBackground}
+              alt="Jelzy Candy Rush Logo"
+            />
+          </div>
 
-        {/* Subtitle */}
-        <span
-          ref={subtitleRef}
-          className="z-10 text-subtle-gradient mt-2 text-[clamp(1rem,3vw,1.75rem)] font-semibold max-w-[90%] sm:max-w-xl will-change-transform text-white/90 drop-shadow-md opacity-0"
-        >
-          Match Sweet. Crush Big. Win Every Level
-        </span>
+          {/* Title */}
+          <h1
+            ref={titleRef}
+            className="text-gradient-candy z-10 mt-2 sm:mt-3 font-bold font-orbitron leading-tight tracking-wide will-change-transform opacity-0"
+            style={{ fontSize: "min(6vh, 5vw, 3.5rem)" }}
+          >
+            Jelzy Candy Rush
+          </h1>
 
-        {/* Button */}
-        <a
-          ref={btnRef}
-          className="mt-6 sm:mt-8 z-10 inline-block transition-transform duration-300 hover:scale-110 will-change-transform opacity-0"
-          target="_blank"
-          href="https://play.google.com/store/apps/details?id=com.app.devstree.chess&hl=en_IN"
-        >
-          <img
-            className="w-36 sm:w-44 md:w-48 drop-shadow-lg"
-            src={ASSETS.images.heroPlaystoreBtn}
-            alt="google play store button"
-          />
-        </a>
-      </Section>
+          {/* Subtitle */}
+          <span
+            ref={subtitleRef}
+            className="z-10 text-subtle-gradient mt-1 sm:mt-2 font-semibold will-change-transform text-white/90 drop-shadow-md opacity-0 max-w-[80vw] sm:max-w-xl"
+            style={{ fontSize: "min(2.8vh, 2.2vw, 1.25rem)" }}
+          >
+            Match Sweet. Crush Big. Win Every Level
+          </span>
+
+          {/* Button */}
+          <a
+            ref={btnRef}
+            className="mt-3 sm:mt-5 z-10 inline-block transition-transform duration-300 hover:scale-110 will-change-transform opacity-0"
+            target="_blank"
+            href="https://play.google.com/store/apps/details?id=com.app.devstree.candy&hl=en_IN"
+          >
+            <img
+              className="drop-shadow-lg"
+              style={{ width: "min(14vh, 18vw, 10rem)" }}
+              src={ASSETS.images.heroPlaystoreBtn}
+              alt="google play store button"
+            />
+          </a>
+        </Section>
+      </div>
     </div>
   );
 };

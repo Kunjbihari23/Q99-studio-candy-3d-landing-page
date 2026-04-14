@@ -7,6 +7,7 @@ interface SodaSceneProps {
   color: string;
   bubbleCount: number;
   direction: SodaDirection;
+  aspectRatio?: number;
 }
 
 /**
@@ -18,6 +19,7 @@ const SodaScene = ({
   color,
   bubbleCount,
   direction,
+  aspectRatio,
 }: SodaSceneProps) => {
   return (
     <group>
@@ -27,7 +29,12 @@ const SodaScene = ({
       <directionalLight position={[-3, 3, 2]} intensity={0.5} color="#ffccdd" />
       <pointLight position={[0, -2, 3]} intensity={0.8} color="#ff88aa" />
 
-      <LiquidMesh progress={progress} color={color} direction={direction} />
+      <LiquidMesh
+        progress={progress}
+        color={color}
+        direction={direction}
+        aspectRatio={aspectRatio}
+      />
       <BubbleSystem count={bubbleCount} color={color} progress={progress} />
     </group>
   );

@@ -373,12 +373,22 @@ const PowerupWorld = ({ activeIndex }: { activeIndex: number }) => {
         receiveShadow
       >
         <circleGeometry args={[4.1, 64]} />
-        <meshBasicMaterial color="#17071f" transparent opacity={0.92} />
+        <meshBasicMaterial
+          side={THREE.DoubleSide}
+          color="#17071f"
+          transparent
+          opacity={0.92}
+        />
       </mesh>
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.05, 0]}>
         <ringGeometry args={[1.6, 3.85, 96]} />
-        <meshBasicMaterial color="#7de8ff" transparent opacity={0.16} />
+        <meshBasicMaterial
+          side={THREE.DoubleSide}
+          color="#7de8ff"
+          transparent
+          opacity={0.16}
+        />
       </mesh>
 
       <group ref={orbitRef}>

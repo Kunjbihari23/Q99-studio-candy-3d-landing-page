@@ -48,8 +48,11 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
+  height: 100%;
   max-width: 100%;
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  position: relative;
   background: linear-gradient(
     to bottom,
     var(--primary),
@@ -69,6 +72,8 @@ body {
   -moz-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* Allow selection inside form fields or explicitly opt-in */
@@ -109,8 +114,7 @@ select {
   -webkit-text-fill-color: transparent;
 
   /* subtle depth only */
-  text-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.15);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 
   animation: shineMove 4s linear infinite;
 }
@@ -157,6 +161,9 @@ select {
   --font-rajdhani: "Rajdhani", sans-serif;
   --font-orbitron: "Orbitron", sans-serif;
   --font-cinzel: "Cinzel", sans-serif;
+
+  /* Custom breakpoints */
+  --breakpoint-xs: 375px;
 }
 
 html.lenis,
